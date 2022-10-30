@@ -6,6 +6,26 @@ import { useState, useEffect, useCallback } from "react";
 
 function App() {
   let [appointmentList,setAppointmentList] = useState([]);
+  let [query,setQuery] = useState("");
+  let[sortBy, setSortBy] = useState("petName");
+  let[orderBy,setOrderBy] = useState("asc");
+
+
+  const filteredAppointments = appointmentList.filter(
+    item => {
+      return(
+        item.petName.toLowerCase().includes(query.toLowerCase())||
+        item.ownerName.toLowerCase().includes(query.toLowerCase())||
+        item.aptNotes.toLowerCase().includes(query.toLowerCase())
+      )
+    }
+  ).sort((a,b) => {
+    let order = (orderBy === 'asc') ? 1: -1;
+    return(
+      a[sortBy].toLowerCase() < b[sortBy].toLowerCase()
+      ? -1 * order: 1 * order 
+    ) 
+  })
   const fetchData = useCallback(()=>{
     fetch('./Data.json').then(response => response.json()).then(data =>{
       setAppointmentList(data);
@@ -19,12 +39,23 @@ function App() {
       <h1 className='text-5xl mb-3'>
         <BiCalendar className="inline-block text-red-400 align-top" />Your Appointment</h1>
       <AddAppointment />
-      <Search />
+      <Search 
+      query={query}
+      onQueryChange = {myQuery => setQuery(myQuery)}
+      orderBy = {orderBy}
+      onOrderByChange = {mySort => setOrderBy(mySort)}
+      sortBy = {sortBy}
+      onSortByChange = {mySort => setSortBy(mySort)}
+      />
       <ul className="divide-y divide-gray-200">
         {
-          appointmentList.map(appointment =>(
+          filteredAppointments.map(appointment =>(
             <AppointmentInfo key={appointment.id}
             appointment = {appointment}
+            onDeleteAppointment = {
+              appointmentId => setAppointmentList(appointmentList.filter(appointment => 
+                appointment.id !== appointmentId))
+            }
             />
           ))
         }
